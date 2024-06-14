@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form</title>
+    <style>
+        /* CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .form-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        .form-container h2 {
+            margin-top: 0;
+        }
+        .form-container label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="email"],
+        .form-container input[type="file"],
+        .form-container select,
+        .form-container textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-container textarea {
+            resize: vertical;
+        }
+        .form-container input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .form-container input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Contact Form</h2>
+        <form id="contact-form" enctype="multipart/form-data">
+            <!-- Name input -->
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <!-- Contact input -->
+            <label for="contact">Contact:</label>
+            <input type="text" id="contact" name="contact" required>
+
+            <!-- Location dropdown -->
+            <label for="location">Location:</label>
+            <select id="location" name="location" required>
+                <option value="">Select a location</option>
+                <option value="new_york">New York</option>
+                <option value="los_angeles">Los Angeles</option>
+                <option value="chicago">Chicago</option>
+                <option value="houston">Houston</option>
+                <option value="miami">Miami</option>
+                <option value="san_francisco">San Francisco</option>
+                <option value="seattle">Seattle</option>
+                <option value="boston">Boston</option>
+                <option value="las_vegas">Las Vegas</option>
+                <option value="atlanta">Atlanta</option>
+                <!-- Add more options as needed -->
+            </select>
+
+            <!-- Image file input -->
+            <label for="image">Select image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+
+            <!-- Description input -->
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="4" cols="50" required></textarea>
+
+            <!-- Email input -->
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <!-- Submit button -->
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js';
+        import { getStorage } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-storage.js';
+        import { getDatabase, ref, push } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+    apiKey: "AIzaSyCwzwiuzcu4RfMf5vfGDUUBTfWRgV1UTDs",
+    authDomain: "green-street-20e5e.firebaseapp.com",
+    projectId: "green-street-20e5e",
+    storageBucket: "green-street-20e5e.appspot.com",
+    messagingSenderId: "420682581480",
+    appId: "1:420682581480:web:6428c4a04a472d94c8905d",
+    measurementId: "G-VQ7GX9TK6T"
+};
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const database = getDatabase(app);
+
+        // Handle form submission
+        document.getElementById('contact-form').addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            const file = document.getElementById('image').files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Upload image to Firebase Storage
+            const storageRef = ref(storage, 'images/' + file.name);
+            uploadBytes(storageRef, file)
+                .then((snapshot) => {
+                    console.log('Image uploaded successfully');
+                    return getDownloadURL(snapshot.ref);
+                })
+                .then((imageUrl) => {
+                    // Form data including image URL
+                    const formData = {
+                        name: document.getElementById('name').value,
+                        contact: document.getElementById('contact').value,
+                        location: document.getElementById('location').value,
+                        description: document.getElementById('description').value,
+                        email: document.getElementById('email').value,
+                        imageUrl: imageUrl // Add imageUrl to formData
+                    };
+
+                    // Push form data to the database
+                    return push(ref(database, 'contacts'), formData);
+                })
+                .then(() => {
+                    // Form submitted successfully
+                    alert('Form submitted successfully!');
+                    // Clear form fields
+                    document.getElementById('contact-form').reset();
+                })
+                .catch((error) => {
+                    // Handle errors
+                    console.error('Error submitting form:', error);
+                    alert('Error submitting form. Please try again later.');
+                });
+        });
+    </script>
+</body>
+</html>
